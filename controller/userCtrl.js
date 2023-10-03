@@ -17,7 +17,6 @@ exports.createUser = asyncHandler(async (req, res) => {
 
 //Login a User
 exports.loginUserCtrl = asyncHandler(async (req, res) => {
-    F
     const { email, password } = req.body
     const findUser = await User.findOne({ email })
     if (findUser && (await findUser.isPasswordMatched(password))) {
@@ -70,6 +69,30 @@ exports.loginAdmin = asyncHandler(async (req, res) => {
         })
     } else {
         throw new Error("Invalid Credentials")
+    }
+})
+
+//Refresh
+exports.handleRefreshToken = asyncHandler(async (req, res) => {
+    const cookie = req.cookies;
+    if (!cookie?.refreshToken) throw new Error("No Refresh Token in Cookies");
+    const refreshToken = cookie.refreshToken;
+    const user = await User.findOne({ refreshToken });
+    if (!user) throw new Error(" No Refresh token present in db or not matched");
+    jwt.verify(refreshToken, process.env.JWT_SECRET, (err, decoded) => {
+        if (err || user.id !== decoded.id) {
+            throw new Error("There is something wrong with refresh token");
+        }
+        const accessToken = generateToken(user?._id);
+        res.json({ accessToken });
+    });
+});
+
+//Log out
+exports.logout = asyncHandler(async (res, req) => {
+    const cookie = req.cookies
+    if (!cookie?.refreshToken) {
+
     }
 })
 
